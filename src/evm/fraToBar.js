@@ -14,14 +14,16 @@ async function fraToBar (from, receipt, amount) {
 
   const bar2abarFee = 0.02 * (10 ** 18);
   const bar2Frc20Fee = 0.01 * (10 ** 18);
-  for (const value of [bar2abarFee, bar2Frc20Fee]) {
+
+  for (const fee of [bar2abarFee, bar2Frc20Fee]) {
     try {
+      const gas = await prismBridge.methods.depositFRA(findoraTo).estimateGas({ from, value: BigInt(fee).toString() });
       const { rawTransaction } = await web3.eth.accounts.signTransaction({
         to: PRISM_BRIDGE_ADDRESS,
         data: calldata,
         from,
-        gas: '850000',
-        value: BigInt(value).toString()
+        gas,
+        value: BigInt(fee).toString()
       }, PRIVATE_KEY);
       const receipt = await web3.eth.sendSignedTransaction(rawTransaction);
       console.log('deposit fee:', receipt.transactionHash)
@@ -31,12 +33,14 @@ async function fraToBar (from, receipt, amount) {
   }
 
   try {
+    const amountValue = BigInt(new BigNumber(amount).times(10 ** 18).toString()).toString()
+    const gas = await prismBridge.methods.depositFRA(findoraTo).estimateGas({ from, value: amountValue });
     const { rawTransaction } = await web3.eth.accounts.signTransaction({
       to: PRISM_BRIDGE_ADDRESS,
       data: calldata,
       from,
-      gas: '850000',
-      value: BigInt(new BigNumber(amount).times(10 ** 18).toString()).toString()
+      gas,
+      value: amountValue
     }, PRIVATE_KEY);
     const receipt = await web3.eth.sendSignedTransaction(rawTransaction);
     console.log('deposit amount:', receipt.transactionHash)

@@ -37,11 +37,12 @@ async function frc20ToBar (from, receipt, amount) {
   const feeCalldata = prismBridge.methods.depositFRA(findoraTo).encodeABI();
   for (const fee of [bar2abarFee, bar2Frc20Fee]) {
     try {
+      const gas = await prismBridge.methods.depositFRA(findoraTo).estimateGas({ from, value: BigInt(fee).toString() });
       const { rawTransaction } = await web3.eth.accounts.signTransaction({
         to: PRISM_BRIDGE_ADDRESS,
         data: feeCalldata,
         from,
-        gas: '850000',
+        gas,
         value: BigInt(fee).toString()
       }, PRIVATE_KEY);
       const receipt = await web3.eth.sendSignedTransaction(rawTransaction);
@@ -53,11 +54,12 @@ async function frc20ToBar (from, receipt, amount) {
 
   const tokenCalldata = prismBridge.methods.depositFRC20(FRC20_ADDRESS, findoraTo, amountWei).encodeABI();
   try {
+    const gas = await prismBridge.methods.depositFRC20(FRC20_ADDRESS, findoraTo, amountWei).estimateGas({ from });
     const { rawTransaction } = await web3.eth.accounts.signTransaction({
       to: PRISM_BRIDGE_ADDRESS,
       data: tokenCalldata,
       from,
-      gas: '850000',
+      gas,
     }, PRIVATE_KEY);
     const receipt = await web3.eth.sendSignedTransaction(rawTransaction);
     console.log('deposit token:', receipt.transactionHash);
